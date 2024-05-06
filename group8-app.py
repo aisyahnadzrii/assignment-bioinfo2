@@ -10,7 +10,7 @@ def fetch_protein_data(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
     fasta_data = response.text
-    record = SeqIO.read(fasta_data.splitlines(), "fasta")
+    record = SeqIO.read(StringIO(fasta_data), "fasta")  # StringIO converts string to file-like object
     length = len(record.seq)
     weight = molecular_weight(record.seq)
     return {'length': length, 'weight': weight}
