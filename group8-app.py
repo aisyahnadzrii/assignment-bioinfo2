@@ -2,6 +2,8 @@ import streamlit as st
 import requests
 import matplotlib.pyplot as plt
 import networkx as nx
+from Bio import pairwise2
+from Bio.pairwise2 import format_alignment
 
 # Function to retrieve protein data from UniProt
 def get_protein_data(uniprot_id):
@@ -89,6 +91,11 @@ def display_ppi_network(interactions):
     plt.title("Protein-Protein Interaction Network")
     st.pyplot(fig)
 
+# Function to perform sequence alignment
+def perform_sequence_alignment(input_sequence, reference_sequence):
+    alignments = pairwise2.align.globalxx(input_sequence, reference_sequence)
+    return alignments[0]
+
 # Main function
 def main():
     st.title("Protein Data Explorer")
@@ -99,6 +106,16 @@ def main():
             display_protein_characteristics(protein_data)
             ppi_network = get_ppi_network(uniprot_id)  # Dummy implementation, replace with actual retrieval
             display_ppi_network(ppi_network)
+
+    # Protein sequence input
+    protein_sequence = st.text_area("Enter Protein Sequence:")
+    reference_sequence = "ACGT..."  # Reference sequence for alignment
+
+    if st.button("Perform Sequence Alignment"):
+        if protein_sequence:
+            alignment = perform_sequence_alignment(protein_sequence, reference_sequence)
+            st.text("Sequence Alignment:")
+            st.text(format_alignment(*alignment))
 
 if __name__ == "__main__":
     main()
