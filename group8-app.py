@@ -89,6 +89,3 @@ def display_analysis_results(protein_sequence):
     # Perform sequence alignment (dummy example)
     alignment_score = perform_sequence_alignment(protein_sequence, protein_sequence[::-1])
     st.write("Sequence Alignment Score:", alignment_score)
-
-if __name__ == "__main__":
-    main()
