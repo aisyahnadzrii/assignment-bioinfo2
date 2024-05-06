@@ -4,6 +4,7 @@ from Bio.SeqUtils import molecular_weight
 import matplotlib.pyplot as plt
 import networkx as nx
 import requests
+from io import StringIO
 
 # Function to fetch protein data from Uniprot
 def fetch_protein_data(uniprot_id):
