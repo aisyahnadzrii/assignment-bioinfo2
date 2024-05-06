@@ -1,5 +1,5 @@
 import streamlit as st
-from Bio import SeqIO
+from Bio.SeqIO import parse
 from Bio.SeqUtils import molecular_weight
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -15,7 +15,7 @@ def fetch_protein_data(uniprot_id):
         raise ValueError("Error fetching protein data. Please check the Uniprot ID.")
     fasta_data = response.text
     try:
-        records = SeqIO.parse(StringIO(fasta_data), "fasta")
+        records = parse(StringIO(fasta_data), "fasta")
         record = next(records)  # Get the first record
         length = len(record.seq)
         weight = molecular_weight(record.seq)
