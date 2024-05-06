@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import requests
 from io import StringIO
+import logging
 
 # Function to fetch protein data from Uniprot
 def fetch_protein_data(uniprot_id):
@@ -15,11 +16,15 @@ def fetch_protein_data(uniprot_id):
     fasta_data = response.text
     try:
         record = SeqIO.read(StringIO(fasta_data), "fasta")
-    except (ValueError, SeqIO.ParserError):
+        length = len(record.seq)
+        weight = molecular_weight(record.seq)
+        return {'length': length, 'weight': weight}
+    except (ValueError, SeqIO.ParserError) as e:
+        logging.error(f"Error parsing protein data: {e}")
         raise ValueError("Error parsing protein data. Please check the Uniprot ID.")
-    length = len(record.seq)
-    weight = molecular_weight(record.seq)
-    return {'length': length, 'weight': weight}
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+        raise ValueError("An unexpected error occurred.")
 
 # Function to retrieve protein-protein interaction network from STRING DB
 def fetch_ppi_network(uniprot_id):
