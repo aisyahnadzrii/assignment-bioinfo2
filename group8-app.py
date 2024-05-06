@@ -15,10 +15,13 @@ def fetch_protein_data(uniprot_id):
         raise ValueError("Error fetching protein data. Please check the Uniprot ID.")
     fasta_data = response.text
     try:
-        record = SeqIO.read(StringIO(fasta_data), "fasta")
+        records = SeqIO.parse(StringIO(fasta_data), "fasta")
+        record = next(records)  # Get the first record
         length = len(record.seq)
         weight = molecular_weight(record.seq)
         return {'length': length, 'weight': weight}
+    except StopIteration:
+        raise ValueError("No protein sequence found in the provided data.")
     except (ValueError, SeqIO.ParserError) as e:
         logging.error(f"Error parsing protein data: {e}")
         raise ValueError("Error parsing protein data. Please check the Uniprot ID.")
