@@ -9,12 +9,12 @@ def get_protein_data(uniprot_id):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
-        if "accession" in data:
+        if "entry_name" in data and "protein_name" in data and "length" in data and "molecular_weight" in data:
             return data
         else:
-            raise ValueError("No protein data found for the provided UniProt ID.")
+            raise ValueError("Incomplete protein data retrieved. Please check the UniProt ID or try again later.")
     else:
-        raise ValueError("Error retrieving protein data. Please check the UniProt ID.")
+        raise ValueError("Error retrieving protein data. Please check the UniProt ID or try again later.")
 
 # Protein-Protein Interaction network generation from STRING
 def get_ppi_network(uniprot_id):
