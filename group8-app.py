@@ -93,7 +93,7 @@ def display_ppi_network(interactions):
 
 # Function to perform sequence alignment
 def perform_sequence_alignment(input_sequence, reference_sequence):
-    alignments = pairwise2.align.globalxx(input_sequence, reference_sequence)
+    alignments = pairwise2.align.globalxx(input_sequence, reference_sequence, one_alignment_only=True)
     return alignments[0]
 
 # Main function
