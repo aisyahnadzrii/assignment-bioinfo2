@@ -3,18 +3,45 @@ import requests
 import networkx as nx
 import matplotlib.pyplot as plt
 
-# UniProtKB protein data retrieval function
+# Function to retrieve protein data from UniProt
 def get_protein_data(uniprot_id):
-    url = f"https://www.ebi.ac.uk/proteins/api/proteins/{uniprot_id}"
+    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.txt"
     response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        if "entry_name" in data and "protein_name" in data and "length" in data and "molecular_weight" in data:
-            return data
-        else:
-            raise ValueError("Incomplete protein data retrieved. Please check the UniProt ID or try again later.")
-    else:
-        raise ValueError("Error retrieving protein data. Please check the UniProt ID or try again later.")
+    protein_data = {"ID": uniprot_id}  # Initialize with the UniProt ID
+    for line in response.iter_lines():
+        line = line.decode("utf-8")
+        if line.startswith("ID"):
+            fields = line.split()
+            if len(fields) >= 2:
+                protein_data["Name"] = ' '.join(fields[1:])
+            else:
+                protein_data["Name"] = "Not available"
+        elif line.startswith("SQ"):
+            weight_line = next(response.iter_lines()).decode("utf-8")
+            weight = weight_line.split()[-1]
+            protein_data["Weight"] = weight
+        elif line.startswith("DE   RecName: Full="):
+            function = line.split("Full=")[1].split(";")[0]
+            protein_data["Function"] = function
+        elif line.startswith("DR   SUPFAM"):
+            structure = line.split(";")[1]
+            protein_data["Structure"] = structure
+        elif line.startswith("FT   MOD_RES"):
+            length = int(line.split()[2])
+            protein_data["Length"] = length
+        elif line.startswith("CC   -!- SUBCELLULAR LOCATION:"):
+            subcellular_location = line.split("CC   -!- SUBCELLULAR LOCATION:")[1].strip()
+            protein_data["Subcellular Location"] = subcellular_location
+        elif line.startswith("FT   MOD_RES"):
+            ptms = line.split(";")[1:]
+            protein_data["PTMs"] = [ptm.strip() for ptm in ptms]
+        elif line.startswith("DR   Reactome"):
+            pathway = line.split(";")[1]
+            protein_data["Pathway"] = pathway
+        elif line.startswith("DR   MIM"):
+            disease = line.split(";")[1]
+            protein_data["Disease"] = disease
+    return protein_data
 
 # Protein-Protein Interaction network generation from STRING
 def get_ppi_network(uniprot_id):
