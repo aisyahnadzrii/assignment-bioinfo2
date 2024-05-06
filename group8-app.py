@@ -99,23 +99,29 @@ def perform_sequence_alignment(input_sequence, reference_sequence):
 # Main function
 def main():
     st.title("Protein Data Explorer")
-    uniprot_id = st.text_input("Enter UniProt ID:")
-    if st.button("Get Protein Data"):
-        if uniprot_id:
-            protein_data = get_protein_data(uniprot_id)
-            display_protein_characteristics(protein_data)
-            ppi_network = get_ppi_network(uniprot_id)  # Dummy implementation, replace with actual retrieval
-            display_ppi_network(ppi_network)
+    
+    # Dropdown to choose input type
+    input_type = st.selectbox("Choose Input Type", ["UniProt ID", "Protein Sequence"])
+    
+    if input_type == "UniProt ID":
+        uniprot_id = st.text_input("Enter UniProt ID:")
+        if st.button("Get Protein Data"):
+            if uniprot_id:
+                protein_data = get_protein_data(uniprot_id)
+                display_protein_characteristics(protein_data)
+                ppi_network = get_ppi_network(uniprot_id)  # Dummy implementation, replace with actual retrieval
+                display_ppi_network(ppi_network)
+    
+    elif input_type == "Protein Sequence":
+        # Protein sequence input
+        protein_sequence = st.text_area("Enter Protein Sequence:")
+        reference_sequence = "ACGT..."  # Reference sequence for alignment
 
-    # Protein sequence input
-    protein_sequence = st.text_area("Enter Protein Sequence:")
-    reference_sequence = "ACGT..."  # Reference sequence for alignment
-
-    if st.button("Perform Sequence Alignment"):
-        if protein_sequence:
-            alignment = perform_sequence_alignment(protein_sequence, reference_sequence)
-            st.text("Sequence Alignment:")
-            st.text(format_alignment(*alignment))
+        if st.button("Perform Sequence Alignment"):
+            if protein_sequence:
+                alignment = perform_sequence_alignment(protein_sequence, reference_sequence)
+                st.text("Sequence Alignment:")
+                st.text(format_alignment(*alignment))
 
 if __name__ == "__main__":
     main()
