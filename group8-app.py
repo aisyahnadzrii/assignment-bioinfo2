@@ -10,8 +10,13 @@ from io import StringIO
 def fetch_protein_data(uniprot_id):
     url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
     response = requests.get(url)
+    if response.status_code != 200:
+        raise ValueError("Error fetching protein data. Please check the Uniprot ID.")
     fasta_data = response.text
-    record = SeqIO.read(StringIO(fasta_data), "fasta")  # StringIO converts string to file-like object
+    try:
+        record = SeqIO.read(StringIO(fasta_data), "fasta")
+    except (ValueError, SeqIO.ParserError):
+        raise ValueError("Error parsing protein data. Please check the Uniprot ID.")
     length = len(record.seq)
     weight = molecular_weight(record.seq)
     return {'length': length, 'weight': weight}
