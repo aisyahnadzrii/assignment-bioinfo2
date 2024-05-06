@@ -8,7 +8,11 @@ def get_protein_data(uniprot_id):
     url = f"https://www.ebi.ac.uk/proteins/api/proteins/{uniprot_id}"
     response = requests.get(url)
     if response.status_code == 200:
-        return response.json()["results"][0]
+        data = response.json()
+        if "accession" in data:
+            return data
+        else:
+            raise ValueError("No protein data found for the provided UniProt ID.")
     else:
         raise ValueError("Error retrieving protein data. Please check the UniProt ID.")
 
