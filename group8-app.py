@@ -1,62 +1,80 @@
 import streamlit as st
-import requests
+from Bio import SeqIO
+from Bio.SeqUtils import molecular_weight
+import matplotlib.pyplot as plt
 import networkx as nx
+import requests
 
-# UniProtKB protein data retrieval function
-def get_protein_data(uniprot_id):
-  url = f"https://www.ebi.ac.uk/proteins/api/proteins/{uniprot_id}"
-  response = requests.get(url)
-  try:
-    return response.json()["results"][0]
-  except (requests.exceptions.RequestException, KeyError):
-    return None  # Or provide a custom error message
+# Function to fetch protein data from Uniprot
+def fetch_protein_data(uniprot_id):
+    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.fasta"
+    response = requests.get(url)
+    fasta_data = response.text
+    record = SeqIO.read(fasta_data.splitlines(), "fasta")
+    length = len(record.seq)
+    weight = molecular_weight(record.seq)
+    return {'length': length, 'weight': weight}
 
-# Protein-Protein Interaction network generation from STRING
-def get_ppi_network(uniprot_id):
-  url = f"https://string-db.org/api/interactions/{uniprot_id}"
-  response = requests.get(url)
-  data = response.json()
-  
-  # Create network object
-  G = nx.Graph()
-  
-  # Add nodes (proteins)
-  for interaction in data["interactions"]:
-    protein1 = interaction["protein1"]["identifier"]
-    protein2 = interaction["protein2"]["identifier"]
-    G.add_edge(protein1, protein2)
-  
-  return G
+# Function to retrieve protein-protein interaction network from STRING DB
+def fetch_ppi_network(uniprot_id):
+    # Placeholder function - replace with actual implementation
+    # Here, let's assume we have a dummy network for demonstration
+    G = nx.Graph()
+    G.add_node(uniprot_id)
+    G.add_nodes_from(["Interactor1", "Interactor2", "Interactor3"])
+    G.add_edges_from([(uniprot_id, "Interactor1"), (uniprot_id, "Interactor2"), (uniprot_id, "Interactor3")])
+    return G
 
-# Streamlit App
-st.title("Protein Data Explorer")
+# Function for sequence alignment using Biopython
+def perform_sequence_alignment(sequence1, sequence2):
+    # Placeholder function - replace with actual implementation
+    # Here, let's assume we are performing a simple local alignment
+    # This is just a demonstration, you should replace this with proper sequence alignment code
+    alignment_score = len(sequence1) + len(sequence2)  # Dummy score
+    return alignment_score
 
-# Input field for UniProt ID
-uniprot_id = st.text_input("Enter UniProt ID:")
+# Streamlit app
+def main():
+    st.title("Protein Data Analysis App")
 
-if st.button("Get Protein Data"):
-  if not uniprot_id:
-    st.error("Please enter a UniProt ID.")
-  else:
-    # Retrieve protein data
-    protein_data = get_protein_data(uniprot_id)
-    
-    # Handle case where no data is found
-    if protein_data is None:
-      st.error("Protein data not found for the given ID.")
-    else:
-      # Display protein characteristics
-      st.header("Protein Characteristics")
-      try:
-        st.write(f"**Entry Name:** {protein_data['entry_name']}")
-      except KeyError:
-        st.write("Entry Name not found.")
-      st.write(f"**Protein Name:** {protein_data['protein_name']['full']}")
-      st.write(f"**Length:** {protein_data['length']}")
-      st.write(f"**Molecular Weight:** {protein_data['molecular_weight']}")
-      
-      # Get and display PPI network
-      ppi_network = get_ppi_network(uniprot_id)
-      st.header("Protein-Protein Interaction Network")
-      nx.draw(ppi_network, with_labels=True, node_color='lightblue', edge_color='gray')
-      st.pyplot()
+    # Sidebar for user input
+    option = st.sidebar.selectbox("Select Input Type", ("Uniprot ID", "Protein Sequence"))
+
+    if option == "Uniprot ID":
+        uniprot_id = st.sidebar.text_input("Enter Uniprot ID")
+        if st.sidebar.button("Fetch Data"):
+            protein_data = fetch_protein_data(uniprot_id)
+            display_protein_info(protein_data)
+
+            # Fetch PPI network
+            ppi_network = fetch_ppi_network(uniprot_id)
+            display_ppi_network(ppi_network)
+
+    elif option == "Protein Sequence":
+        protein_sequence = st.sidebar.text_area("Enter Protein Sequence")
+        if st.sidebar.button("Analyze Sequence"):
+            display_analysis_results(protein_sequence)
+
+def display_protein_info(protein_data):
+    # Display protein characteristics
+    st.write("Protein Characteristics:")
+    st.write("Length:", protein_data['length'])
+    st.write("Weight:", protein_data['weight'])
+
+def display_ppi_network(ppi_network):
+    # Visualize PPI network
+    st.write("Protein-Protein Interaction Network:")
+    pos = nx.spring_layout(ppi_network)
+    nx.draw(ppi_network, pos, with_labels=True)
+    plt.title("Protein-Protein Interaction Network")
+    st.pyplot()
+
+def display_analysis_results(protein_sequence):
+    # Perform sequence analysis
+    st.write("Performing Sequence Analysis:")
+    # Perform sequence alignment (dummy example)
+    alignment_score = perform_sequence_alignment(protein_sequence, protein_sequence[::-1])
+    st.write("Sequence Alignment Score:", alignment_score)
+
+if __name__ == "__main__":
+    main()
