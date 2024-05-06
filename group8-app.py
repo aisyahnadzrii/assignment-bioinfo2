@@ -6,8 +6,11 @@ import networkx as nx
 def get_protein_data(uniprot_id):
   url = f"https://www.ebi.ac.uk/proteins/api/proteins/{uniprot_id}"
   response = requests.get(url)
-  return response.json()["results"][0]
-
+  try:
+    return response.json()["results"][0]
+  except KeyError:
+    return None  # Or provide a custom error message
+    
 # Protein-Protein Interaction network generation from STRING
 def get_ppi_network(uniprot_id):
   url = f"https://string-db.org/api/interactions/{uniprot_id}"
