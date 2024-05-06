@@ -9,6 +9,7 @@ def get_protein_data(uniprot_id):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
+        print("Response content:", data)  # Print response content for debugging
         if "entry_name" in data and "protein_name" in data and "length" in data and "molecular_weight" in data:
             return data
         else:
