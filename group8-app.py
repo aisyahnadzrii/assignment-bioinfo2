@@ -1,97 +1,50 @@
 import streamlit as st
+from Bio import ExPASy
+from Bio import SwissProt
 import requests
-import networkx as nx
-import matplotlib.pyplot as plt
 
-# Function to retrieve protein data from UniProt
-def get_protein_data(uniprot_id):
-    url = f"https://www.uniprot.org/uniprot/{uniprot_id}.txt"
-    response = requests.get(url)
-    protein_data = {"ID": uniprot_id}  # Initialize with the UniProt ID
-    for line in response.iter_lines():
-        line = line.decode("utf-8")
-        if line.startswith("ID"):
-            fields = line.split()
-            if len(fields) >= 2:
-                protein_data["Name"] = ' '.join(fields[1:])
-            else:
-                protein_data["Name"] = "Not available"
-        elif line.startswith("SQ"):
-            weight_line = next(response.iter_lines()).decode("utf-8")
-            weight = weight_line.split()[-1]
-            protein_data["Weight"] = weight
-        elif line.startswith("DE   RecName: Full="):
-            function = line.split("Full=")[1].split(";")[0]
-            protein_data["Function"] = function
-        elif line.startswith("DR   SUPFAM"):
-            structure = line.split(";")[1]
-            protein_data["Structure"] = structure
-        elif line.startswith("FT   MOD_RES"):
-            length = int(line.split()[2])
-            protein_data["Length"] = length
-        elif line.startswith("CC   -!- SUBCELLULAR LOCATION:"):
-            subcellular_location = line.split("CC   -!- SUBCELLULAR LOCATION:")[1].strip()
-            protein_data["Subcellular Location"] = subcellular_location
-        elif line.startswith("FT   MOD_RES"):
-            ptms = line.split(";")[1:]
-            protein_data["PTMs"] = [ptm.strip() for ptm in ptms]
-        elif line.startswith("DR   Reactome"):
-            pathway = line.split(";")[1]
-            protein_data["Pathway"] = pathway
-        elif line.startswith("DR   MIM"):
-            disease = line.split(";")[1]
-            protein_data["Disease"] = disease
-    return protein_data
+# Step 2: Retrieve protein data using the Uniprot ID
+def retrieve_protein_data(uniprot_id):
+    handle = ExPASy.get_sprot_raw(uniprot_id)
+    record = SwissProt.read(handle)
+    return record
 
-# Protein-Protein Interaction network generation from STRING
-def get_ppi_network(uniprot_id):
-    url = f"https://string-db.org/api/interactions/{uniprot_id}"
+# Step 3: Display the characteristics of the protein
+def display_protein_characteristics(protein_data):
+    st.subheader("Protein Characteristics")
+    st.write(f"Entry Name: {protein_data.entry_name}")
+    st.write(f"Protein Length: {protein_data.sequence_length}")
+    # Add more characteristics as needed
+
+# Step 4: Fetch the corresponding protein-protein interaction network from the STRING database
+def fetch_interaction_network(uniprot_id):
+    # Example API request to STRING database
+    url = f"https://string-db.org/api/tsv/network?identifiers={uniprot_id}"
     response = requests.get(url)
     if response.status_code == 200:
-        data = response.json()
-
-        # Create network object
-        G = nx.Graph()
-
-        # Add nodes (proteins)
-        for interaction in data["interactions"]:
-            protein1 = interaction["protein1"]["identifier"]
-            protein2 = interaction["protein2"]["identifier"]
-            G.add_edge(protein1, protein2)
-
-        return G
+        return response.text
     else:
-        raise ValueError("Error retrieving PPI network data. Please check the UniProt ID.")
+        return None
 
-# Streamlit App
-st.title("Protein Data Explorer")
+# Step 5: Visualize the interaction network
+def visualize_interaction_network(interaction_network):
+    st.subheader("Protein-Protein Interaction Network")
+    # Visualize the interaction network using appropriate visualization libraries
 
-# Input field for UniProt ID
-uniprot_id = st.text_input("Enter UniProt ID:")
+# Step 6: Build the Streamlit web application
+def main():
+    st.title("Protein Data Explorer")
 
-if st.button("Get Protein Data"):
-    if not uniprot_id:
-        st.error("Please enter a UniProt ID.")
-    else:
-        try:
-            # Retrieve protein data
-            protein_data = get_protein_data(uniprot_id)
+    # Sidebar for user input
+    uniprot_id = st.sidebar.text_input("Enter Uniprot ID")
+    if uniprot_id:
+        protein_data = retrieve_protein_data(uniprot_id)
+        display_protein_characteristics(protein_data)
+        interaction_network = fetch_interaction_network(uniprot_id)
+        if interaction_network:
+            visualize_interaction_network(interaction_network)
+        else:
+            st.error("Failed to fetch interaction network.")
 
-            # Display protein characteristics
-            st.header("Protein Characteristics")
-            st.write(f"**Entry Name:** {protein_data['entry_name']}")
-            st.write(f"**Protein Name:** {protein_data['protein_name']['full']}")
-            st.write(f"**Length:** {protein_data['length']}")
-            st.write(f"**Molecular Weight:** {protein_data['molecular_weight']}")
-
-            # Get and display PPI network
-            ppi_network = get_ppi_network(uniprot_id)
-            st.header("Protein-Protein Interaction Network")
-            pos = nx.spring_layout(ppi_network)
-            plt.figure(figsize=(8, 6))
-            nx.draw(ppi_network, pos, with_labels=True, node_color='lightblue', edge_color='gray', font_size=8)
-            plt.title("PPI Network")
-            st.pyplot(plt)
-            
-        except ValueError as e:
-            st.error(f"{e}")
+if __name__ == "__main__":
+    main()
