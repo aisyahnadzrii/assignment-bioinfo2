@@ -91,9 +91,9 @@ def display_ppi_network(interactions):
 
 # Main function
 def main():
-    st.title("Protein Data Retrieval and Analysis")
+    st.title("Protein Data Explorer")
     uniprot_id = st.text_input("Enter UniProt ID:")
-    if st.button("Retrieve Data"):
+    if st.button("Get Protein Data"):
         if uniprot_id:
             protein_data = get_protein_data(uniprot_id)
             display_protein_characteristics(protein_data)
